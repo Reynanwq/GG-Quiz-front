@@ -20,6 +20,11 @@
   --sy: 0 0 6px #ffe600, 0 0 18px #ffe60040;
   --sr: 0 0 6px #ff3030, 0 0 18px #ff303040;
   --sc: 0 0 6px #00ffee, 0 0 18px #00ffee40;
+
+  /* variáveis extras usadas em alguns componentes */
+  --fg: #d0d0e8;
+  --panel: #181828;
+  --border: #252545;
 }
 
 *,
@@ -30,43 +35,63 @@
   padding: 0;
 }
 
+/* ── WALLPAPER FIXO ────────────────────────────────────────────────────────── */
 body {
-  background: var(--bg);
   color: var(--text);
   font-family: "Press Start 2P", monospace;
   font-size: 10px;
   line-height: 1.8;
   min-height: 100vh;
   cursor: crosshair;
+
+  /* imagem de fundo — coloque o arquivo em /public/bg.jpg */
+  background-color: var(--bg);
+  background-image: url("./assets/bg.jpg");
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
-/* CRT scanlines */
+/* overlay escuro sobre o wallpaper para manter contraste */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.1) 0,
-    rgba(0, 0, 0, 0.1) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  /* camada 1: escurece bastante o fundo */
+  background: rgba(4, 4, 10, 0.82);
   pointer-events: none;
-  z-index: 9998;
+  z-index: 0;
 }
-/* CRT vignette */
+
+/* CRT scanlines — por cima do overlay */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 55%,
-    rgba(0, 0, 0, 0.7) 100%
-  );
+  background:
+    /* scanlines */
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.1) 0,
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    /* vignette */
+    radial-gradient(
+        ellipse at center,
+        transparent 50%,
+        rgba(0, 0, 0, 0.65) 100%
+      );
   pointer-events: none;
   z-index: 9997;
+}
+
+/* garante que todo conteúdo fique acima dos overlays */
+#root {
+  position: relative;
+  z-index: 1;
 }
 
 .app {
@@ -77,7 +102,10 @@ body::after {
 
 /* ── NAV */
 nav {
-  background: var(--surf2);
+  /* fundo semi-transparente para o wallpaper aparecer levemente */
+  background: rgba(18, 18, 32, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 3px solid var(--green);
   box-shadow: var(--sg);
   padding: 0 1.5rem;
@@ -307,6 +335,7 @@ nav {
   letter-spacing: 0.15em;
   box-shadow: var(--sg);
   margin-bottom: 1.5rem;
+  background: rgba(7, 7, 13, 0.75);
 }
 .hero-t1 {
   font-size: clamp(26px, 5.5vw, 44px);
@@ -404,7 +433,7 @@ nav {
   margin-bottom: 1.5rem;
 }
 .mc {
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.88);
   border: 3px solid var(--bdr);
   padding: 1.4rem 1rem;
   cursor: pointer;
@@ -453,7 +482,7 @@ nav {
 .rsb {
   font-family: "Press Start 2P", monospace;
   font-size: 7px;
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.88);
   border: 2px solid var(--bdr);
   color: var(--dim);
   padding: 0.35rem 0.75rem;
@@ -476,7 +505,7 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.92);
   border: 3px solid var(--bdr);
   padding: 0.55rem 1rem;
   margin-bottom: 1rem;
@@ -544,7 +573,7 @@ nav {
 }
 
 .qbox {
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.92);
   border: 3px solid var(--green);
   padding: 1.4rem;
   margin-bottom: 1.4rem;
@@ -575,7 +604,7 @@ nav {
   gap: 0.7rem;
 }
 .opt {
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.88);
   border: 3px solid var(--bdr);
   color: var(--text);
   font-family: "Press Start 2P", monospace;
@@ -593,19 +622,19 @@ nav {
 .opt:hover:not(:disabled) {
   border-color: var(--yellow);
   color: var(--yellow);
-  background: rgba(255, 230, 0, 0.04);
+  background: rgba(255, 230, 0, 0.06);
   box-shadow: var(--sy);
 }
 .opt.ok {
   border-color: var(--green) !important;
   color: var(--green) !important;
-  background: rgba(57, 255, 20, 0.07) !important;
+  background: rgba(57, 255, 20, 0.09) !important;
   box-shadow: var(--sg) !important;
 }
 .opt.no {
   border-color: var(--red) !important;
   color: var(--red) !important;
-  background: rgba(255, 48, 48, 0.07) !important;
+  background: rgba(255, 48, 48, 0.09) !important;
   box-shadow: var(--sr) !important;
 }
 .opt:disabled {
@@ -651,6 +680,7 @@ nav {
   margin: 1.2rem 0;
   box-shadow: var(--sc);
   position: relative;
+  background: rgba(7, 7, 13, 0.8);
 }
 .rrating::before {
   content: "RATING";
@@ -716,7 +746,7 @@ nav {
 .cb {
   font-family: "Press Start 2P", monospace;
   font-size: 7px;
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.88);
   border: 2px solid var(--bdr);
   color: var(--dim);
   padding: 0.3rem 0.6rem;
@@ -752,7 +782,7 @@ nav {
   transition: background 0.1s;
 }
 .rtbl tbody tr:hover {
-  background: rgba(57, 255, 20, 0.03);
+  background: rgba(57, 255, 20, 0.04);
 }
 .rtbl td {
   padding: 0.55rem 0.75rem;
@@ -802,7 +832,7 @@ nav {
   margin-top: 0.75rem;
 }
 .ccard {
-  background: var(--surf2);
+  background: rgba(24, 24, 40, 0.88);
   border: 3px solid var(--bdr);
   padding: 1.2rem;
   transition: all 0.1s;
@@ -849,14 +879,16 @@ nav {
   margin: 2rem auto;
 }
 .auth-box {
-  background: var(--surf2);
+  background: rgba(18, 18, 32, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 3px solid var(--green);
   padding: 1.5rem;
   box-shadow: var(--sg);
 }
 .fi {
   width: 100%;
-  background: var(--surf);
+  background: rgba(7, 7, 13, 0.85);
   border: 2px solid var(--bdr);
   color: var(--text);
   font-family: "VT323", monospace;
@@ -869,4 +901,13 @@ nav {
 }
 .fi:focus {
   border-color: var(--yellow);
+}
+
+/* label helper */
+.slbl {
+  font-size: 6px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.35rem;
 }

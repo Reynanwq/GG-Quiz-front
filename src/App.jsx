@@ -214,7 +214,6 @@ function AuthPage({ setUser, setPage }) {
     setSuccessMsg("");
     setLoading(true);
 
-    // ── ESQUECI MINHA SENHA ──
     if (isForgot) {
       try {
         await fetchWithAuth("/auth/forgot-password", {
@@ -226,7 +225,6 @@ function AuthPage({ setUser, setPage }) {
         );
         setEmail("");
       } catch (err) {
-        // Nunca revelamos se o email existe ou não — mensagem genérica
         setSuccessMsg(
           "Se o e-mail estiver cadastrado, você receberá o link em instantes.",
         );
@@ -335,7 +333,6 @@ function AuthPage({ setUser, setPage }) {
             </button>
           </form>
 
-          {/* Links de navegação */}
           <div
             style={{
               marginTop: 24,
@@ -424,7 +421,6 @@ function ResetPasswordPage({ setPage }) {
   const [errorMsg, setErrorMsg] = useState("");
   const [done, setDone] = useState(false);
 
-  // Token ausente na URL
   if (!token) {
     return (
       <div className="pg flex justify-center items-center">
@@ -492,7 +488,6 @@ function ResetPasswordPage({ setPage }) {
           <button
             className="btn by"
             onClick={() => {
-              // Limpa o token da URL e vai pro login
               window.history.replaceState({}, "", window.location.pathname);
               setPage("auth");
             }}
@@ -1534,9 +1529,8 @@ function AboutPage() {
 function AdminRegionsTab({ showToast }) {
   const [regions, setRegions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toggleLoading, setToggleLoading] = useState(null); // id em ação
+  const [toggleLoading, setToggleLoading] = useState(null);
 
-  // form de criação
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -1544,11 +1538,9 @@ function AdminRegionsTab({ showToast }) {
   const fetchRegions = async () => {
     setLoading(true);
     try {
-      // Busca TODAS as regiões (ativas e inativas) via endpoint admin
       const data = await fetchWithAuth("/regions/all");
       setRegions(data || []);
     } catch (err) {
-      // fallback: endpoint público retorna só ativas
       try {
         const data = await fetchWithAuth("/regions");
         setRegions(data || []);
@@ -1606,7 +1598,6 @@ function AdminRegionsTab({ showToast }) {
         // Criar e gerenciar ligas/regiões
       </p>
 
-      {/* FORMULÁRIO DE CRIAÇÃO */}
       <div
         className="auth-box"
         style={{ padding: "20px 24px", marginBottom: 28 }}
@@ -1652,7 +1643,6 @@ function AdminRegionsTab({ showToast }) {
         </form>
       </div>
 
-      {/* LISTA DE REGIÕES */}
       {loading ? (
         <p
           className="font-['VT323'] text-2xl text-center"
@@ -1683,7 +1673,6 @@ function AdminRegionsTab({ showToast }) {
                 gap: 12,
               }}
             >
-              {/* INFO */}
               <div
                 style={{
                   display: "flex",
@@ -1716,7 +1705,6 @@ function AdminRegionsTab({ showToast }) {
                 </span>
               </div>
 
-              {/* STATUS + BOTÃO */}
               <div
                 style={{
                   display: "flex",
@@ -1758,11 +1746,52 @@ function AdminRegionsTab({ showToast }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ADMIN: CONTADOR DE ACESSOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AdminAccessCounter() {
+  const [total, setTotal] = useState(null);
+
+  useEffect(() => {
+    fetchWithAuth("/access")
+      .then((n) => setTotal(n))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 16,
+        padding: "10px 20px",
+        border: "1px solid var(--cyan)",
+        background: "rgba(0,255,255,0.04)",
+        marginBottom: 24,
+      }}
+    >
+      <span
+        className="font-['VT323'] text-xl"
+        style={{ color: "var(--cyan)", textShadow: "var(--sc)" }}
+      >
+        📊 ACESSOS TOTAIS
+      </span>
+      <span
+        className="font-['VT323'] text-3xl"
+        style={{ color: "var(--yellow)", textShadow: "var(--sy)" }}
+      >
+        {total === null ? "..." : total.toLocaleString("pt-BR")}
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PÁGINA: ADMIN — PAINEL COMPLETO
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AdminPage({ user, setPage }) {
-  const [tab, setTab] = useState("questions"); // "questions" | "users" | "regions"
+  const [tab, setTab] = useState("questions");
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -1886,6 +1915,9 @@ function AdminPage({ user, setPage }) {
     <div className="pg">
       <p className="h1">PAINEL ADMIN</p>
       <div className="divpix" />
+
+      {/* ── CONTADOR DE ACESSOS ── */}
+      <AdminAccessCounter />
 
       {/* TABS */}
       <div
@@ -2216,6 +2248,9 @@ export default function App() {
     if (params.get("token")) {
       setPage("reset-password");
     }
+
+    // Ping de acesso — registra visita sem armazenar dados pessoais
+    fetchWithAuth("/access/ping", { method: "POST" }).catch(() => {});
   }, []);
 
   return (
