@@ -19,7 +19,6 @@ const fetchWithAuth = async (url, options = {}) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    // Trata erros de validação do Spring (formato: { campo: "mensagem" })
     if (!errorData.message && typeof errorData === "object") {
       const firstMsg = Object.values(errorData)[0];
       if (firstMsg) throw new Error(String(firstMsg));
@@ -99,14 +98,12 @@ function HomePage({ setPage }) {
   const [top3, setTop3] = useState([]);
   const [displayScores, setDisplayScores] = useState([0, 0, 0]);
 
-  // Busca top 3 do ranking global
   useEffect(() => {
     fetchWithAuth("/ranking?period=ALLTIME&page=0&size=3")
       .then((res) => setTop3(res.content || []))
       .catch(() => {});
   }, []);
 
-  // Animação de contagem para cada score do top 3
   useEffect(() => {
     if (top3.length === 0) return;
     const targets = top3.map((r) => parseFloat(r.bestRating || r.rating || 0));
@@ -138,7 +135,6 @@ function HomePage({ setPage }) {
           }
         `}</style>
 
-        {/* TOP 3 RANKING */}
         <div
           className="hi-score"
           style={{ flexDirection: "column", gap: 6, alignItems: "center" }}
@@ -204,16 +200,41 @@ function HomePage({ setPage }) {
 
 function AuthPage({ setUser, setPage }) {
   const [isReg, setIsReg] = useState(false);
+  const [isForgot, setIsForgot] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setSuccessMsg("");
     setLoading(true);
+
+    // ── ESQUECI MINHA SENHA ──
+    if (isForgot) {
+      try {
+        await fetchWithAuth("/auth/forgot-password", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        });
+        setSuccessMsg(
+          "Se o e-mail estiver cadastrado, você receberá o link em instantes.",
+        );
+        setEmail("");
+      } catch (err) {
+        // Nunca revelamos se o email existe ou não — mensagem genérica
+        setSuccessMsg(
+          "Se o e-mail estiver cadastrado, você receberá o link em instantes.",
+        );
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -242,13 +263,32 @@ function AuthPage({ setUser, setPage }) {
     }
   };
 
+  const switchMode = (mode) => {
+    setIsReg(mode === "reg");
+    setIsForgot(mode === "forgot");
+    setErrorMsg("");
+    setSuccessMsg("");
+    setEmail("");
+    setPassword("");
+    setUsername("");
+  };
+
   return (
     <div className="pg flex justify-center items-center">
       <div className="auth-wrap w-full max-w-md">
         <div className="auth-box">
           <h2 className="text-center h1 mb-6">
-            {isReg ? "REGISTRO" : "LOGIN"}
+            {isForgot ? "RECUPERAR SENHA" : isReg ? "REGISTRO" : "LOGIN"}
           </h2>
+
+          {successMsg && (
+            <p
+              className="text-center mb-4 font-['VT323'] text-xl"
+              style={{ color: "var(--green)", textShadow: "var(--sg)" }}
+            >
+              {successMsg}
+            </p>
+          )}
           {errorMsg && (
             <p
               className="text-center text-[var(--red)] text-xs mb-4"
@@ -257,8 +297,9 @@ function AuthPage({ setUser, setPage }) {
               {errorMsg}
             </p>
           )}
+
           <form onSubmit={handleSubmit}>
-            {isReg && (
+            {isReg && !isForgot && (
               <input
                 className="fi"
                 placeholder="NOME DE INVOCADOR"
@@ -275,49 +316,240 @@ function AuthPage({ setUser, setPage }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <input
-              className="fi"
-              type="password"
-              placeholder="SENHA"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            {!isForgot && (
+              <input
+                className="fi"
+                type="password"
+                placeholder="SENHA"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            )}
             <button
               className="btn bg w-full mt-4"
               type="submit"
               disabled={loading}
             >
-              {loading ? "PROCESSANDO..." : "ENTRAR"}
+              {loading ? "PROCESSANDO..." : isForgot ? "ENVIAR LINK" : "ENTRAR"}
             </button>
           </form>
-          <p
-            className="text-center text-gray-500 mt-6 text-xs font-['VT323'] text-xl cursor-pointer"
-            onClick={() => {
-              setIsReg(!isReg);
-              setErrorMsg("");
+
+          {/* Links de navegação */}
+          <div
+            style={{
+              marginTop: 24,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              alignItems: "center",
             }}
           >
-            {isReg ? (
-              <>
-                JÁ TEM CONTA?{" "}
-                <span
-                  style={{ color: "var(--yellow)", textShadow: "var(--sy)" }}
-                >
-                  LOGIN
-                </span>
-              </>
-            ) : (
-              <>
-                NÃO TEM CONTA?{" "}
-                <span
-                  style={{ color: "var(--yellow)", textShadow: "var(--sy)" }}
-                >
-                  REGISTRE-SE
-                </span>
-              </>
+            {!isForgot && (
+              <p
+                className="font-['VT323'] text-xl cursor-pointer"
+                style={{ color: "var(--dim)" }}
+                onClick={() => switchMode(isReg ? "login" : "reg")}
+              >
+                {isReg ? (
+                  <>
+                    JÁ TEM CONTA?{" "}
+                    <span
+                      style={{
+                        color: "var(--yellow)",
+                        textShadow: "var(--sy)",
+                      }}
+                    >
+                      LOGIN
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    NÃO TEM CONTA?{" "}
+                    <span
+                      style={{
+                        color: "var(--yellow)",
+                        textShadow: "var(--sy)",
+                      }}
+                    >
+                      REGISTRE-SE
+                    </span>
+                  </>
+                )}
+              </p>
             )}
+            {!isReg && !isForgot && (
+              <p
+                className="font-['VT323'] text-lg cursor-pointer"
+                style={{ color: "var(--dim)", opacity: 0.7 }}
+                onClick={() => switchMode("forgot")}
+              >
+                ESQUECEU A SENHA?{" "}
+                <span style={{ color: "var(--cyan)", textShadow: "var(--sc)" }}>
+                  RECUPERAR
+                </span>
+              </p>
+            )}
+            {isForgot && (
+              <p
+                className="font-['VT323'] text-xl cursor-pointer"
+                style={{ color: "var(--dim)" }}
+                onClick={() => switchMode("login")}
+              >
+                ←{" "}
+                <span
+                  style={{ color: "var(--yellow)", textShadow: "var(--sy)" }}
+                >
+                  VOLTAR AO LOGIN
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TELA: REDEFINIR SENHA (acessada via link do email)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ResetPasswordPage({ setPage }) {
+  const token = new URLSearchParams(window.location.search).get("token");
+
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [done, setDone] = useState(false);
+
+  // Token ausente na URL
+  if (!token) {
+    return (
+      <div className="pg flex justify-center items-center">
+        <div className="auth-box text-center">
+          <p className="h1 mb-4" style={{ color: "var(--red)" }}>
+            LINK INVÁLIDO
           </p>
+          <p
+            className="font-['VT323'] text-xl mb-6"
+            style={{ color: "var(--dim)" }}
+          >
+            Este link de recuperação é inválido ou está incompleto.
+          </p>
+          <button className="btn bg" onClick={() => setPage("auth")}>
+            VOLTAR AO LOGIN
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+
+    if (password !== confirm) {
+      setErrorMsg("As senhas não coincidem.");
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await fetchWithAuth("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token, newPassword: password }),
+      });
+      setDone(true);
+    } catch (err) {
+      setErrorMsg(err.message || "Link inválido ou expirado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div className="pg flex justify-center items-center">
+        <div className="auth-box text-center">
+          <p
+            className="font-['VT323'] text-4xl mb-4"
+            style={{ color: "var(--green)", textShadow: "var(--sg)" }}
+          >
+            ✓ SENHA REDEFINIDA!
+          </p>
+          <p
+            className="font-['VT323'] text-xl mb-6"
+            style={{ color: "var(--dim)" }}
+          >
+            Sua senha foi alterada com sucesso. Faça login para continuar.
+          </p>
+          <button
+            className="btn by"
+            onClick={() => {
+              // Limpa o token da URL e vai pro login
+              window.history.replaceState({}, "", window.location.pathname);
+              setPage("auth");
+            }}
+          >
+            ▶ IR PARA O LOGIN
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pg flex justify-center items-center">
+      <div className="auth-wrap w-full max-w-md">
+        <div className="auth-box">
+          <h2 className="text-center h1 mb-2">NOVA SENHA</h2>
+          <p
+            className="text-center font-['VT323'] text-lg mb-6"
+            style={{ color: "var(--dim)" }}
+          >
+            Digite e confirme sua nova senha.
+          </p>
+
+          {errorMsg && (
+            <p
+              className="text-center mb-4 font-['VT323'] text-xl"
+              style={{ color: "var(--red)", textShadow: "var(--sr)" }}
+            >
+              {errorMsg}
+            </p>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <input
+              className="fi"
+              type="password"
+              placeholder="NOVA SENHA"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <input
+              className="fi"
+              type="password"
+              placeholder="CONFIRMAR SENHA"
+              required
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+            <button
+              className="btn by w-full mt-4"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "SALVANDO..." : "▶ SALVAR NOVA SENHA"}
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -329,7 +561,7 @@ function RankingPage({ user }) {
   const [regions, setRegions] = useState([]);
   const [loadingRegions, setLoadingRegions] = useState(true);
   const [loadingRanking, setLoadingRanking] = useState(true);
-  const [myPosition, setMyPosition] = useState(null); // posição do usuário logado
+  const [myPosition, setMyPosition] = useState(null);
 
   const [period, setPeriod] = useState("ALLTIME");
   const [regionId, setRegionId] = useState(null);
@@ -362,7 +594,6 @@ function RankingPage({ user }) {
     fetchRanking();
   }, [period, regionId, page]);
 
-  // Busca posição do usuário logado sempre que período/região mudam
   useEffect(() => {
     if (!user) {
       setMyPosition(null);
@@ -372,7 +603,7 @@ function RankingPage({ user }) {
     if (regionId !== null) url += `&regionId=${regionId}`;
     fetchWithAuth(url)
       .then((data) => setMyPosition(data))
-      .catch(() => setMyPosition(null)); // 404 = ainda não jogou
+      .catch(() => setMyPosition(null));
   }, [period, regionId, user]);
 
   const renderRow = (r, index) => {
@@ -455,7 +686,6 @@ function RankingPage({ user }) {
         )}
       </div>
 
-      {/* CARD: MINHA POSIÇÃO */}
       {user && (
         <div
           style={{
@@ -608,7 +838,6 @@ function SuggestPage({ user, setPage }) {
       .finally(() => setLoadingRegions(false));
   }, []);
 
-  // Redireciona para login se não estiver autenticado
   if (!user) {
     return (
       <div className="pg flex justify-center items-center">
@@ -707,7 +936,6 @@ function SuggestPage({ user, setPage }) {
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* LIGA / REGIÃO */}
             <label className="slbl">LIGA / REGIÃO</label>
             {loadingRegions ? (
               <p
@@ -732,7 +960,6 @@ function SuggestPage({ user, setPage }) {
               </select>
             )}
 
-            {/* ENUNCIADO */}
             <label className="slbl">PERGUNTA</label>
             <textarea
               className="fi"
@@ -744,7 +971,6 @@ function SuggestPage({ user, setPage }) {
               style={{ resize: "vertical" }}
             />
 
-            {/* ALTERNATIVAS */}
             <label className="slbl">ALTERNATIVAS</label>
             {[
               ["A", optionA, setOptionA],
@@ -770,7 +996,6 @@ function SuggestPage({ user, setPage }) {
               </div>
             ))}
 
-            {/* ALTERNATIVA CORRETA */}
             <label className="slbl" style={{ marginTop: 16 }}>
               ALTERNATIVA CORRETA
             </label>
@@ -788,7 +1013,6 @@ function SuggestPage({ user, setPage }) {
               ))}
             </div>
 
-            {/* DIFICULDADE */}
             <label className="slbl">DIFICULDADE (1 fácil → 10 lendário)</label>
             <div className="flex gap-2 flex-wrap mb-4">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
@@ -841,7 +1065,6 @@ function QuizPage({ user, setPage }) {
   const [serverResult, setServerResult] = useState(null);
   const [loadingMsg, setLoadingMsg] = useState("");
 
-  // Guard: evita que pick() seja chamado mais de uma vez por questão
   const pickingRef = useRef(false);
 
   useEffect(() => {
@@ -853,7 +1076,6 @@ function QuizPage({ user, setPage }) {
 
   const q = qs[idx];
 
-  // Timer — só roda quando não há seleção e a fase é "playing"
   useEffect(() => {
     if (phase !== "playing" || sel !== null) return;
 
@@ -922,12 +1144,10 @@ function QuizPage({ user, setPage }) {
     setSecs(currentTotalSecs);
     setTs(Date.now());
 
-    // Normaliza para string maiúscula para evitar problemas de tipo/case
     const isCorrect =
       option !== null &&
       String(option).toUpperCase() === String(q.correctOption).toUpperCase();
 
-    // Captura snapshot do estado AGORA, antes do setTimeout (evita stale closure)
     const currentCorrectIds = correctIds;
     const currentQuestion = q;
 
@@ -967,8 +1187,6 @@ function QuizPage({ user, setPage }) {
       ...(wId != null ? { wrongQuestionId: wId } : {}),
     };
 
-    console.log("[finishSession] payload →", JSON.stringify(payload, null, 2));
-
     try {
       const result = await fetchWithAuth("/sessions/finish", {
         method: "POST",
@@ -985,7 +1203,6 @@ function QuizPage({ user, setPage }) {
     }
   }
 
-  // ── FASE: SETUP ──────────────────────────────────────────────────────────
   if (phase === "setup")
     return (
       <div className="pg">
@@ -1053,7 +1270,6 @@ function QuizPage({ user, setPage }) {
       </div>
     );
 
-  // ── FASE: PLAYING ─────────────────────────────────────────────────────────
   if (phase === "playing" && q)
     return (
       <div className="pg">
@@ -1098,7 +1314,6 @@ function QuizPage({ user, setPage }) {
       </div>
     );
 
-  // ── FASE: RESULT ──────────────────────────────────────────────────────────
   if (phase === "result")
     return (
       <div className="pg">
@@ -1243,7 +1458,6 @@ function AboutPage() {
                   gap: 12,
                 }}
               >
-                {/* FÓRMULA */}
                 <div
                   className="auth-box"
                   style={{ padding: "12px 16px", borderColor: "var(--yellow)" }}
@@ -1261,7 +1475,6 @@ function AboutPage() {
                     penalidade = 0.2 + (0.8 × (dificuldade_errada − 1) ÷ 9)
                   </p>
                 </div>
-                {/* REGRAS */}
                 <div
                   className="auth-box"
                   style={{ padding: "12px 16px", borderColor: "var(--dim)" }}
@@ -1315,21 +1528,250 @@ function AboutPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PÁGINA: ADMIN — REVISÃO DE QUESTÕES
+// ADMIN: ABA REGIÕES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AdminRegionsTab({ showToast }) {
+  const [regions, setRegions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toggleLoading, setToggleLoading] = useState(null); // id em ação
+
+  // form de criação
+  const [newSlug, setNewSlug] = useState("");
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const fetchRegions = async () => {
+    setLoading(true);
+    try {
+      // Busca TODAS as regiões (ativas e inativas) via endpoint admin
+      const data = await fetchWithAuth("/regions/all");
+      setRegions(data || []);
+    } catch (err) {
+      // fallback: endpoint público retorna só ativas
+      try {
+        const data = await fetchWithAuth("/regions");
+        setRegions(data || []);
+      } catch {
+        showToast("Erro ao carregar regiões.", "err");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegions();
+  }, []);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!newSlug.trim() || !newName.trim()) return;
+    setCreating(true);
+    try {
+      await fetchWithAuth("/regions", {
+        method: "POST",
+        body: JSON.stringify({ slug: newSlug.trim(), name: newName.trim() }),
+      });
+      showToast(`Região "${newName}" criada com sucesso!`, "ok");
+      setNewSlug("");
+      setNewName("");
+      fetchRegions();
+    } catch (err) {
+      showToast(err.message || "Erro ao criar região.", "err");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleToggle = async (id, currentActive) => {
+    setToggleLoading(id);
+    try {
+      await fetchWithAuth(`/regions/${id}/toggle`, { method: "PATCH" });
+      showToast(
+        currentActive ? "Região desativada." : "Região ativada!",
+        currentActive ? "err" : "ok",
+      );
+      fetchRegions();
+    } catch (err) {
+      showToast(err.message || "Erro ao alterar status.", "err");
+    } finally {
+      setToggleLoading(null);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <p className="sub" style={{ marginBottom: 20 }}>
+        // Criar e gerenciar ligas/regiões
+      </p>
+
+      {/* FORMULÁRIO DE CRIAÇÃO */}
+      <div
+        className="auth-box"
+        style={{ padding: "20px 24px", marginBottom: 28 }}
+      >
+        <p
+          className="font-['VT323'] text-2xl mb-4"
+          style={{ color: "var(--cyan)", textShadow: "var(--sc)" }}
+        >
+          + NOVA REGIÃO
+        </p>
+        <form onSubmit={handleCreate}>
+          <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label className="slbl">SLUG</label>
+              <input
+                className="fi"
+                style={{ marginBottom: 0 }}
+                placeholder="Ex: lck"
+                value={newSlug}
+                onChange={(e) => setNewSlug(e.target.value)}
+                required
+              />
+            </div>
+            <div style={{ flex: 2 }}>
+              <label className="slbl">NOME</label>
+              <input
+                className="fi"
+                style={{ marginBottom: 0 }}
+                placeholder="Ex: League Champions Korea"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <button
+            className="btn by w-full mt-2"
+            type="submit"
+            disabled={creating}
+          >
+            {creating ? "CRIANDO..." : "▶ CRIAR REGIÃO"}
+          </button>
+        </form>
+      </div>
+
+      {/* LISTA DE REGIÕES */}
+      {loading ? (
+        <p
+          className="font-['VT323'] text-2xl text-center"
+          style={{ color: "var(--yellow)" }}
+        >
+          CARREGANDO REGIÕES...
+        </p>
+      ) : regions.length === 0 ? (
+        <p
+          className="font-['VT323'] text-xl text-center"
+          style={{ color: "var(--dim)" }}
+        >
+          Nenhuma região cadastrada.
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {regions.map((r) => (
+            <div
+              key={r.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 18px",
+                border: `1px solid ${r.active ? "var(--border)" : "rgba(255,255,255,0.06)"}`,
+                background: r.active ? "transparent" : "rgba(255,255,255,0.02)",
+                opacity: r.active ? 1 : 0.55,
+                gap: 12,
+              }}
+            >
+              {/* INFO */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                <span
+                  className="font-['VT323'] text-xl"
+                  style={{
+                    color: r.active ? "var(--cyan)" : "var(--dim)",
+                    textShadow: r.active ? "var(--sc)" : "none",
+                    minWidth: 40,
+                  }}
+                >
+                  {(r.slug || "").toUpperCase()}
+                </span>
+                <span
+                  className="font-['VT323'] text-xl"
+                  style={{
+                    color: "var(--fg)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {r.name}
+                </span>
+              </div>
+
+              {/* STATUS + BOTÃO */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  flexShrink: 0,
+                }}
+              >
+                <span
+                  className="font-['VT323'] text-lg"
+                  style={{
+                    color: r.active ? "var(--green)" : "var(--red)",
+                    textShadow: r.active ? "var(--sg)" : "var(--sr)",
+                    minWidth: 56,
+                    textAlign: "right",
+                  }}
+                >
+                  {r.active ? "● ATIVA" : "○ INATIVA"}
+                </span>
+                <button
+                  className={`btn sm ${r.active ? "br" : "bg"}`}
+                  style={{ minWidth: 90 }}
+                  disabled={toggleLoading === r.id}
+                  onClick={() => handleToggle(r.id, r.active)}
+                >
+                  {toggleLoading === r.id
+                    ? "..."
+                    : r.active
+                      ? "DESATIVAR"
+                      : "ATIVAR"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PÁGINA: ADMIN — PAINEL COMPLETO
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AdminPage({ user, setPage }) {
-  const [tab, setTab] = useState("questions"); // "questions" | "users"
+  const [tab, setTab] = useState("questions"); // "questions" | "users" | "regions"
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(null); // id da questão em ação
+  const [actionLoading, setActionLoading] = useState(null);
   const [page, setPageNum] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [toast, setToast] = useState(null); // { msg, type: "ok" | "err" }
+  const [toast, setToast] = useState(null);
 
-  // ── ABA USUÁRIOS ──────────────────────────────────────────────────────────
   const [userSearch, setUserSearch] = useState("");
-  const [userResult, setUserResult] = useState(null); // usuário encontrado
+  const [userResult, setUserResult] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
   const [roleLoading, setRoleLoading] = useState(false);
 
@@ -1372,8 +1814,8 @@ function AdminPage({ user, setPage }) {
   };
 
   useEffect(() => {
-    fetchPending(0);
-  }, []);
+    if (tab === "questions") fetchPending(0);
+  }, [tab]);
 
   const handleApprove = async (id) => {
     setActionLoading(id);
@@ -1413,9 +1855,6 @@ function AdminPage({ user, setPage }) {
     setUserLoading(true);
     setUserResult(null);
     try {
-      // Busca pelo ranking para encontrar o usuário (usa o endpoint de ranking/me simulando busca por username via ranking)
-      // Na prática, precisaria de GET /api/users?username=... mas usamos o que temos:
-      // Vamos buscar via GET /api/users/{search} — endpoint que criaremos no back
       const data = await fetchWithAuth(
         `/users/search?username=${encodeURIComponent(userSearch.trim())}`,
       );
@@ -1449,10 +1888,13 @@ function AdminPage({ user, setPage }) {
       <div className="divpix" />
 
       {/* TABS */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+      <div
+        style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}
+      >
         {[
           ["questions", "⚙ QUESTÕES PENDENTES"],
           ["users", "👤 GERENCIAR USUÁRIOS"],
+          ["regions", "🗺️ REGIÕES"],
         ].map(([t, label]) => (
           <button
             key={t}
@@ -1486,8 +1928,11 @@ function AdminPage({ user, setPage }) {
         </div>
       )}
 
-      {tab === "users" ? (
-        /* ── ABA: GERENCIAR USUÁRIOS ── */
+      {/* ── ABA: REGIÕES ── */}
+      {tab === "regions" && <AdminRegionsTab showToast={showToast} />}
+
+      {/* ── ABA: USUÁRIOS ── */}
+      {tab === "users" && (
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <p className="sub" style={{ marginBottom: 16 }}>
             // Buscar invocador e alterar cargo
@@ -1573,182 +2018,181 @@ function AdminPage({ user, setPage }) {
             </div>
           )}
         </div>
-      ) : loading ? (
-        <p
-          className="font-['VT323'] text-2xl text-center"
-          style={{ color: "var(--yellow)" }}
-        >
-          CARREGANDO QUESTÕES PENDENTES...
-        </p>
-      ) : questions.length === 0 ? (
-        <div
-          className="auth-box text-center"
-          style={{ maxWidth: 500, margin: "40px auto" }}
-        >
+      )}
+
+      {/* ── ABA: QUESTÕES PENDENTES ── */}
+      {tab === "questions" &&
+        (loading ? (
           <p
-            className="font-['VT323'] text-3xl"
-            style={{ color: "var(--green)", textShadow: "var(--sg)" }}
+            className="font-['VT323'] text-2xl text-center"
+            style={{ color: "var(--yellow)" }}
           >
-            ✓ NENHUMA QUESTÃO PENDENTE
+            CARREGANDO QUESTÕES PENDENTES...
           </p>
-          <p
-            className="font-['VT323'] text-xl mt-2"
-            style={{ color: "var(--dim)" }}
+        ) : questions.length === 0 ? (
+          <div
+            className="auth-box text-center"
+            style={{ maxWidth: 500, margin: "40px auto" }}
           >
-            Tudo revisado. Bom trabalho, admin!
-          </p>
-        </div>
-      ) : (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-            maxWidth: 760,
-            margin: "0 auto",
-          }}
-        >
-          {questions.map((q) => (
-            <div
-              key={q.id}
-              className="auth-box"
-              style={{ padding: "20px 24px" }}
+            <p
+              className="font-['VT323'] text-3xl"
+              style={{ color: "var(--green)", textShadow: "var(--sg)" }}
             >
-              {/* HEADER DA QUESTÃO */}
+              ✓ NENHUMA QUESTÃO PENDENTE
+            </p>
+            <p
+              className="font-['VT323'] text-xl mt-2"
+              style={{ color: "var(--dim)" }}
+            >
+              Tudo revisado. Bom trabalho, admin!
+            </p>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 24,
+              maxWidth: 760,
+              margin: "0 auto",
+            }}
+          >
+            {questions.map((q) => (
               <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
+                key={q.id}
+                className="auth-box"
+                style={{ padding: "20px 24px" }}
               >
-                <span
-                  className="font-['VT323'] text-lg"
-                  style={{ color: "var(--dim)" }}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
                 >
-                  ID #{q.id} &nbsp;·&nbsp; REGIÃO:{" "}
-                  {(q.region || "?").toUpperCase()} &nbsp;·&nbsp; DIFICULDADE:{" "}
-                  {q.difficulty}/10
-                </span>
-                <span
-                  className="font-['VT323'] text-lg"
-                  style={{ color: "var(--yellow)", textShadow: "var(--sy)" }}
-                >
-                  ● PENDING
-                </span>
-              </div>
-
-              {/* ENUNCIADO */}
-              <p
-                className="font-['VT323'] text-2xl mb-4"
-                style={{ color: "var(--fg)", lineHeight: 1.4 }}
-              >
-                {q.statement}
-              </p>
-
-              {/* ALTERNATIVAS */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 8,
-                  marginBottom: 16,
-                }}
-              >
-                {["A", "B", "C", "D"].map((opt) => (
-                  <div
-                    key={opt}
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      alignItems: "flex-start",
-                      padding: "8px 10px",
-                      border: `1px solid ${q.correctOption === opt ? "var(--green)" : "var(--border)"}`,
-                      background:
-                        q.correctOption === opt
-                          ? "rgba(0,255,65,0.05)"
-                          : "transparent",
-                    }}
+                  <span
+                    className="font-['VT323'] text-lg"
+                    style={{ color: "var(--dim)" }}
                   >
-                    <span
-                      className="font-['VT323'] text-xl"
-                      style={{ color: optColors[opt], minWidth: 20 }}
-                    >
-                      {opt}
-                    </span>
-                    <span
-                      className="font-['VT323'] text-xl"
+                    ID #{q.id} &nbsp;·&nbsp; REGIÃO:{" "}
+                    {(q.region || "?").toUpperCase()} &nbsp;·&nbsp; DIFICULDADE:{" "}
+                    {q.difficulty}/10
+                  </span>
+                  <span
+                    className="font-['VT323'] text-lg"
+                    style={{ color: "var(--yellow)", textShadow: "var(--sy)" }}
+                  >
+                    ● PENDING
+                  </span>
+                </div>
+
+                <p
+                  className="font-['VT323'] text-2xl mb-4"
+                  style={{ color: "var(--fg)", lineHeight: 1.4 }}
+                >
+                  {q.statement}
+                </p>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 8,
+                    marginBottom: 16,
+                  }}
+                >
+                  {["A", "B", "C", "D"].map((opt) => (
+                    <div
+                      key={opt}
                       style={{
-                        color:
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "flex-start",
+                        padding: "8px 10px",
+                        border: `1px solid ${q.correctOption === opt ? "var(--green)" : "var(--border)"}`,
+                        background:
                           q.correctOption === opt
-                            ? "var(--green)"
-                            : "var(--dim)",
-                        textShadow:
-                          q.correctOption === opt ? "var(--sg)" : "none",
+                            ? "rgba(0,255,65,0.05)"
+                            : "transparent",
                       }}
                     >
-                      {q[`option${opt}`]}
-                      {q.correctOption === opt && " ✓"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                      <span
+                        className="font-['VT323'] text-xl"
+                        style={{ color: optColors[opt], minWidth: 20 }}
+                      >
+                        {opt}
+                      </span>
+                      <span
+                        className="font-['VT323'] text-xl"
+                        style={{
+                          color:
+                            q.correctOption === opt
+                              ? "var(--green)"
+                              : "var(--dim)",
+                          textShadow:
+                            q.correctOption === opt ? "var(--sg)" : "none",
+                        }}
+                      >
+                        {q[`option${opt}`]}
+                        {q.correctOption === opt && " ✓"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
 
-              {/* AÇÕES */}
-              <div style={{ display: "flex", gap: 12 }}>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button
+                    className="btn bg"
+                    style={{
+                      flex: 1,
+                      background: "rgba(0,255,65,0.08)",
+                      borderColor: "var(--green)",
+                      color: "var(--green)",
+                    }}
+                    disabled={actionLoading === q.id}
+                    onClick={() => handleApprove(q.id)}
+                  >
+                    {actionLoading === q.id ? "..." : "✓ APROVAR"}
+                  </button>
+                  <button
+                    className="btn br"
+                    style={{ flex: 1 }}
+                    disabled={actionLoading === q.id}
+                    onClick={() => handleReject(q.id)}
+                  >
+                    {actionLoading === q.id ? "..." : "✗ REJEITAR"}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-2">
                 <button
-                  className="btn bg"
-                  style={{
-                    flex: 1,
-                    background: "rgba(0,255,65,0.08)",
-                    borderColor: "var(--green)",
-                    color: "var(--green)",
-                  }}
-                  disabled={actionLoading === q.id}
-                  onClick={() => handleApprove(q.id)}
+                  className="btn bg sm"
+                  disabled={page === 0}
+                  onClick={() => fetchPending(page - 1)}
                 >
-                  {actionLoading === q.id ? "..." : "✓ APROVAR"}
+                  ◀ ANTERIOR
                 </button>
-                <button
-                  className="btn br"
-                  style={{ flex: 1 }}
-                  disabled={actionLoading === q.id}
-                  onClick={() => handleReject(q.id)}
+                <span
+                  className="font-['VT323'] text-xl"
+                  style={{ color: "var(--dim)" }}
                 >
-                  {actionLoading === q.id ? "..." : "✗ REJEITAR"}
+                  PÁGINA {page + 1} DE {totalPages}
+                </span>
+                <button
+                  className="btn bg sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => fetchPending(page + 1)}
+                >
+                  PRÓXIMA ▶
                 </button>
               </div>
-            </div>
-          ))}
-
-          {/* PAGINAÇÃO */}
-          {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-2">
-              <button
-                className="btn bg sm"
-                disabled={page === 0}
-                onClick={() => fetchPending(page - 1)}
-              >
-                ◀ ANTERIOR
-              </button>
-              <span
-                className="font-['VT323'] text-xl"
-                style={{ color: "var(--dim)" }}
-              >
-                PÁGINA {page + 1} DE {totalPages}
-              </span>
-              <button
-                className="btn bg sm"
-                disabled={page >= totalPages - 1}
-                onClick={() => fetchPending(page + 1)}
-              >
-                PRÓXIMA ▶
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        ))}
     </div>
   );
 }
@@ -1766,6 +2210,12 @@ export default function App() {
     if (savedUser && token) {
       setUser(JSON.parse(savedUser));
     }
+
+    // Se a URL contém ?token=, redireciona direto para a tela de reset de senha
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("token")) {
+      setPage("reset-password");
+    }
   }, []);
 
   return (
@@ -1778,6 +2228,7 @@ export default function App() {
       {page === "suggest" && <SuggestPage user={user} setPage={setPage} />}
       {page === "about" && <AboutPage />}
       {page === "admin" && <AdminPage user={user} setPage={setPage} />}
+      {page === "reset-password" && <ResetPasswordPage setPage={setPage} />}
     </div>
   );
 }
