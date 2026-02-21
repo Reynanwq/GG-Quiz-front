@@ -1,0 +1,1738 @@
+
+
+import { useState, useEffect } from "react";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const REGIONS = [
+  { id: 1, slug: "LCK", name: "LCK — Korea" },
+  { id: 2, slug: "LEC", name: "LEC — Europe" },
+  { id: 3, slug: "LCS", name: "LCS — N. America" },
+  { id: 4, slug: "CBLOL", name: "CBLOL — Brasil" },
+  { id: 5, slug: "LPL", name: "LPL — China" },
+];
+
+const ALL_QUESTIONS = [
+  {
+    id: 1,
+    statement: "Qual time venceu o Mundial de 2023?",
+    optionA: "T1",
+    optionB: "Weibo Gaming",
+    optionC: "JDG",
+    optionD: "NRG",
+    correctOption: "A",
+    difficulty: 3,
+    region: "LCK",
+  },
+  {
+    id: 2,
+    statement: "Quantas vezes Faker foi campeao mundial?",
+    optionA: "2",
+    optionB: "3",
+    optionC: "4",
+    optionD: "5",
+    correctOption: "C",
+    difficulty: 2,
+    region: "LCK",
+  },
+  {
+    id: 3,
+    statement: "Qual regiao teve mais titulos mundiais consecutivos?",
+    optionA: "LCK",
+    optionB: "LPL",
+    optionC: "EU LCS",
+    optionD: "NA LCS",
+    correctOption: "A",
+    difficulty: 5,
+    region: "LCK",
+  },
+  {
+    id: 4,
+    statement: "Qual foi o primeiro time coreano a vencer o Mundial?",
+    optionA: "Samsung White",
+    optionB: "SK Telecom T1",
+    optionC: "KT Rolster",
+    optionD: "Najin White Shield",
+    correctOption: "B",
+    difficulty: 6,
+    region: "LCK",
+  },
+  {
+    id: 5,
+    statement: "Em que ano foi o primeiro Mundial de League of Legends?",
+    optionA: "2010",
+    optionB: "2011",
+    optionC: "2012",
+    optionD: "2013",
+    correctOption: "B",
+    difficulty: 4,
+    region: "LCS",
+  },
+  {
+    id: 6,
+    statement: "Qual time europeu venceu o MSI de 2019?",
+    optionA: "Fnatic",
+    optionB: "G2 Esports",
+    optionC: "Team Liquid",
+    optionD: "SKT T1",
+    correctOption: "B",
+    difficulty: 5,
+    region: "LEC",
+  },
+  {
+    id: 7,
+    statement: "O CBLOL foi criado em qual ano?",
+    optionA: "2012",
+    optionB: "2013",
+    optionC: "2014",
+    optionD: "2015",
+    correctOption: "B",
+    difficulty: 7,
+    region: "CBLOL",
+  },
+  {
+    id: 8,
+    statement: "Qual time conquistou o CBLOL de 2023 split 2?",
+    optionA: "LOUD",
+    optionB: "paiN Gaming",
+    optionC: "RED Canids",
+    optionD: "FURIA",
+    correctOption: "A",
+    difficulty: 4,
+    region: "CBLOL",
+  },
+  {
+    id: 9,
+    statement: "Qual jogador e conhecido como Uzi na LPL?",
+    optionA: "Jian Zi-Hao",
+    optionB: "Xie Zhen-Wei",
+    optionC: "Ming Kai",
+    optionD: "Lu Bai-Ze",
+    correctOption: "B",
+    difficulty: 6,
+    region: "LPL",
+  },
+  {
+    id: 10,
+    statement: "O LPL foi fundado em qual ano?",
+    optionA: "2011",
+    optionB: "2012",
+    optionC: "2013",
+    optionD: "2014",
+    correctOption: "C",
+    difficulty: 8,
+    region: "LPL",
+  },
+];
+
+const MOCK_RANKING = [
+  { position: 1, username: "FAKER_FAN_99", rating: 2847.32, attempts: 42 },
+  { position: 2, username: "LCK_GOAT", rating: 2641.18, attempts: 38 },
+  { position: 3, username: "CBLOL_KING", rating: 2398.54, attempts: 55 },
+  { position: 4, username: "PIXEL_PRO", rating: 2211.09, attempts: 29 },
+  { position: 5, username: "ESPORT_NERD", rating: 1987.44, attempts: 61 },
+  { position: 6, username: "MID_OR_FEED", rating: 1854.21, attempts: 33 },
+  { position: 7, username: "TOP_DIFF", rating: 1723.88, attempts: 47 },
+  { position: 8, username: "JUNGLE_GAP", rating: 1601.55, attempts: 28 },
+  { position: 9, username: "SUPP_MAIN", rating: 1488.33, attempts: 52 },
+  { position: 10, username: "ADC_CARRY", rating: 1350.12, attempts: 19 },
+];
+
+const MOCK_CONTRIBUTORS = [
+  {
+    username: "LOREBUFF_99",
+    approved: 17,
+    firstDate: "2024-01-15",
+    regions: ["LCK", "LPL"],
+  },
+  {
+    username: "HISTORYNERD",
+    approved: 12,
+    firstDate: "2024-02-20",
+    regions: ["LEC", "LCS"],
+  },
+  {
+    username: "PROSCOUT_BR",
+    approved: 8,
+    firstDate: "2024-03-05",
+    regions: ["CBLOL"],
+  },
+  {
+    username: "META_PLAYER",
+    approved: 5,
+    firstDate: "2024-04-11",
+    regions: ["LCK"],
+  },
+  {
+    username: "PIXEL_MONK",
+    approved: 3,
+    firstDate: "2024-05-02",
+    regions: ["LPL", "LEC"],
+  },
+];
+
+const INIT_PENDING = [
+  {
+    id: 99,
+    statement: "Quem ganhou o MSI 2022?",
+    optionA: "T1",
+    optionB: "RNG",
+    optionC: "G2",
+    optionD: "EG",
+    correctOption: "A",
+    difficulty: 4,
+    region: "LCK",
+    author: "LOREBUFF_99",
+  },
+  {
+    id: 100,
+    statement: "Quantos splits tem o CBLOL por ano?",
+    optionA: "1",
+    optionB: "2",
+    optionC: "3",
+    optionD: "4",
+    correctOption: "B",
+    difficulty: 2,
+    region: "CBLOL",
+    author: "PROSCOUT_BR",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSS
+// ─────────────────────────────────────────────────────────────────────────────
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  :root {
+    --bg:      #07070d;
+    --surf:    #0f0f1a;
+    --surf2:   #181828;
+    --bdr:     #252545;
+    --green:   #39ff14;
+    --yellow:  #ffe600;
+    --red:     #ff3030;
+    --cyan:    #00ffee;
+    --magenta: #ff00cc;
+    --dim:     #44446a;
+    --text:    #d0d0e8;
+    --sg: 0 0 6px #39ff14, 0 0 18px #39ff1440;
+    --sy: 0 0 6px #ffe600, 0 0 18px #ffe60040;
+    --sr: 0 0 6px #ff3030, 0 0 18px #ff303040;
+    --sc: 0 0 6px #00ffee, 0 0 18px #00ffee40;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    line-height: 1.8;
+    min-height: 100vh;
+    cursor: crosshair;
+  }
+
+  /* CRT scanlines */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 3px);
+    pointer-events: none;
+    z-index: 9998;
+  }
+  /* CRT vignette */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 9997;
+  }
+
+  .app { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── NAV */
+  nav {
+    background: var(--surf2);
+    border-bottom: 3px solid var(--green);
+    box-shadow: var(--sg);
+    padding: 0 1.5rem;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .logo {
+    font-size: 15px; color: var(--green);
+    text-shadow: var(--sg);
+    cursor: pointer;
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  .logo em { color: var(--yellow); text-shadow: var(--sy); font-style: normal; }
+  @keyframes pulse-glow {
+    0%,100% { text-shadow: var(--sg); }
+    50% { text-shadow: 0 0 20px #39ff14, 0 0 50px #39ff1460; }
+  }
+  .nav-links { display: flex; gap: 0; list-style: none; }
+  .nb {
+    background: none; border: none;
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    color: var(--dim); padding: 0.4rem 0.75rem;
+    cursor: pointer; transition: color 0.1s; letter-spacing: 0.05em;
+    position: relative;
+  }
+  .nb:hover { color: var(--yellow); }
+  .nb.on { color: var(--green); text-shadow: var(--sg); }
+  .nb.on::after {
+    content: '▼';
+    position: absolute; bottom: -15px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 5px; color: var(--green);
+  }
+  .nav-r { display: flex; align-items: center; gap: 0.6rem; }
+
+  /* ── BUTTONS */
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    letter-spacing: 0.04em; padding: 0.55rem 1.1rem;
+    border: 3px solid; cursor: pointer;
+    background: var(--surf); transition: all 0.1s;
+    position: relative;
+  }
+  .btn::after {
+    content: ''; position: absolute;
+    bottom: -5px; right: -5px;
+    width: 100%; height: 100%;
+    border: 3px solid; border-color: inherit; opacity: 0.25; z-index: -1;
+  }
+  .btn:active { transform: translate(3px,3px); }
+  .btn:active::after { display: none; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn:disabled:hover { background: var(--surf) !important; box-shadow: none !important; }
+
+  .bg { border-color: var(--green); color: var(--green); }
+  .bg:hover { background: var(--green); color: var(--bg); box-shadow: var(--sg); }
+  .by { border-color: var(--yellow); color: var(--yellow); }
+  .by:hover { background: var(--yellow); color: var(--bg); box-shadow: var(--sy); }
+  .bc { border-color: var(--cyan); color: var(--cyan); }
+  .bc:hover { background: var(--cyan); color: var(--bg); box-shadow: var(--sc); }
+  .br { border-color: var(--red); color: var(--red); }
+  .br:hover { background: var(--red); color: #fff; box-shadow: var(--sr); }
+  .sm { font-size: 7px; padding: 0.3rem 0.7rem; }
+
+  /* ── PAGE */
+  .pg { flex: 1; max-width: 980px; width: 100%; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+  /* ── HEADINGS */
+  .h1 { font-size: 13px; color: var(--yellow); text-shadow: var(--sy); margin-bottom: 0.4rem; letter-spacing: 0.06em; }
+  .sub { font-family: 'VT323', monospace; font-size: 20px; color: var(--dim); margin-bottom: 2rem; }
+  .divpix {
+    height: 3px; margin: 1.25rem 0;
+    background: repeating-linear-gradient(90deg, var(--green) 0, var(--green) 8px, transparent 8px, transparent 16px);
+    box-shadow: var(--sg);
+  }
+
+  /* ─────── HOME */
+  .hero { text-align: center; padding: 2.5rem 1rem 2rem; position: relative; }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 55% 40% at 50% 50%, rgba(57,255,20,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .insert {
+    font-family: 'VT323', monospace; font-size: 20px;
+    color: var(--yellow); text-shadow: var(--sy);
+    letter-spacing: 0.18em; margin-bottom: 1rem;
+    animation: blink 1.2s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .hi-score {
+    display: inline-block;
+    font-family: 'VT323', monospace; font-size: 18px;
+    color: var(--green); border: 2px solid var(--green);
+    padding: 0.3rem 1rem; letter-spacing: 0.15em;
+    box-shadow: var(--sg); margin-bottom: 1.5rem;
+  }
+  .hero-t1 { font-size: clamp(26px,5.5vw,44px); color: var(--green); text-shadow: var(--sg); line-height: 1.2; margin-bottom: 0.4rem; animation: pulse-glow 3s ease-in-out infinite; }
+  .hero-t2 { font-size: clamp(12px,2.5vw,18px); color: var(--yellow); text-shadow: var(--sy); margin-bottom: 1.5rem; }
+  .hero-desc { font-family: 'VT323', monospace; font-size: 21px; color: var(--dim); max-width: 520px; margin: 0 auto 2rem; line-height: 1.5; }
+  .hero-btns { display: flex; gap: 1.25rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem; }
+  .hero-btns .btn { font-size: 9px; padding: 0.65rem 1.4rem; }
+  .rpills { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+  .rpill {
+    font-family: 'VT323', monospace; font-size: 18px;
+    border: 2px solid var(--bdr); color: var(--dim);
+    padding: 0.15rem 0.7rem; letter-spacing: 0.08em;
+    cursor: pointer; transition: all 0.1s;
+  }
+  .rpill:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: var(--sc); }
+
+  .feat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 1rem; margin-top: 0.5rem; }
+  .feat {
+    background: var(--surf2); border: 3px solid var(--bdr);
+    padding: 1.2rem; transition: all 0.1s;
+  }
+  .feat:hover { border-color: var(--green); box-shadow: var(--sg); }
+  .feat-icon { font-size: 24px; margin-bottom: 0.6rem; display: block; }
+  .feat-name { font-size: 8px; color: var(--yellow); margin-bottom: 0.4rem; }
+  .feat-desc { font-family: 'VT323', monospace; font-size: 18px; color: var(--dim); line-height: 1.5; }
+
+  /* ─────── QUIZ SETUP */
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .mc {
+    background: var(--surf2); border: 3px solid var(--bdr);
+    padding: 1.4rem 1rem; cursor: pointer; text-align: center; transition: all 0.1s;
+    position: relative;
+  }
+  .mc:hover { border-color: var(--yellow); box-shadow: var(--sy); }
+  .mc.sel { border-color: var(--green); box-shadow: var(--sg); }
+  .mc.sel::before { content: '►'; position: absolute; top:8px; left:8px; font-size:7px; color:var(--green); }
+  .mc-icon { font-size:30px; margin-bottom:0.6rem; display:block; }
+  .mc-name { font-size:9px; color:var(--text); margin-bottom:0.3rem; }
+  .mc-desc { font-family:'VT323',monospace; font-size:18px; color:var(--dim); }
+
+  .rsel { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .rsb {
+    font-family:'Press Start 2P',monospace; font-size:7px;
+    background:var(--surf2); border:2px solid var(--bdr); color:var(--dim);
+    padding:0.35rem 0.75rem; cursor:pointer; transition:all 0.1s; letter-spacing:0.04em;
+  }
+  .rsb:hover { border-color:var(--yellow); color:var(--yellow); }
+  .rsb.sel { border-color:var(--green); color:var(--green); box-shadow:var(--sg); }
+
+  /* ─────── QUIZ GAME */
+  .hud {
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--surf2); border:3px solid var(--bdr);
+    padding:0.55rem 1rem; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;
+  }
+  .hud-item { font-family:'VT323',monospace; font-size:20px; }
+  .hlbl { font-size:6px; color:var(--dim); display:block; letter-spacing:0.1em; }
+  .hval { color:var(--green); }
+  .hval.warn { color:var(--yellow); }
+  .hval.danger { color:var(--red); animation:blink 0.5s step-end infinite; }
+  .dbadge { font-size:7px; border:2px solid; padding:0.15rem 0.5rem; letter-spacing:0.05em; }
+  .de { border-color:var(--green); color:var(--green); }
+  .dm { border-color:var(--yellow); color:var(--yellow); }
+  .dh { border-color:var(--red); color:var(--red); }
+
+  .pbar { width:100%; height:10px; background:var(--surf2); border:2px solid var(--bdr); margin-bottom:1.2rem; overflow:hidden; }
+  .pfill {
+    height:100%;
+    background:repeating-linear-gradient(90deg,var(--green) 0,var(--green) 6px,#00aa00 6px,#00aa00 12px);
+    transition:width 0.3s steps(10);
+    box-shadow:var(--sg);
+  }
+
+  .qbox {
+    background:var(--surf2); border:3px solid var(--green);
+    padding:1.4rem; margin-bottom:1.4rem; box-shadow:var(--sg); position:relative;
+  }
+  .qbox::before {
+    content:'?'; position:absolute; top:-12px; left:14px;
+    background:var(--surf2); color:var(--green);
+    font-size:10px; padding:0 8px; text-shadow:var(--sg);
+  }
+  .qtext { font-family:'VT323',monospace; font-size:23px; color:var(--text); line-height:1.5; }
+
+  .opts { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; }
+  .opt {
+    background:var(--surf2); border:3px solid var(--bdr); color:var(--text);
+    font-family:'Press Start 2P',monospace; font-size:7.5px;
+    padding:0.7rem 0.9rem; cursor:pointer; text-align:left;
+    display:flex; align-items:flex-start; gap:0.55rem;
+    transition:all 0.1s; line-height:1.8; min-height:60px;
+  }
+  .opt:hover:not(:disabled) { border-color:var(--yellow); color:var(--yellow); background:rgba(255,230,0,0.04); box-shadow:var(--sy); }
+  .opt.ok { border-color:var(--green)!important; color:var(--green)!important; background:rgba(57,255,20,0.07)!important; box-shadow:var(--sg)!important; }
+  .opt.no { border-color:var(--red)!important; color:var(--red)!important; background:rgba(255,48,48,0.07)!important; box-shadow:var(--sr)!important; }
+  .opt:disabled { cursor:not-allowed; }
+  .olet { font-size:9px; color:var(--yellow); min-width:16px; text-shadow:var(--sy); flex-shrink:0; }
+
+  /* ─────── RESULT */
+  .result { text-align:center; padding:2rem 1rem; }
+  .rlbl { font-size:7px; color:var(--dim); letter-spacing:0.25em; margin-bottom:0.75rem; }
+  .rheadline { font-size:clamp(20px,5vw,34px); letter-spacing:0.05em; margin-bottom:1rem; animation:pulse-glow 2s ease-in-out infinite; }
+  .rwin { color:var(--yellow); text-shadow:var(--sy); }
+  .rlose { color:var(--red); text-shadow:var(--sr); }
+  .rrating {
+    display:inline-block; border:3px solid var(--cyan);
+    padding:0.8rem 2rem; margin:1.2rem 0; box-shadow:var(--sc); position:relative;
+  }
+  .rrating::before {
+    content:'RATING'; position:absolute; top:-10px; left:50%;
+    transform:translateX(-50%); background:var(--bg);
+    font-size:7px; color:var(--cyan); padding:0 8px; letter-spacing:0.2em;
+  }
+  .rnum { font-family:'VT323',monospace; font-size:54px; color:var(--cyan); text-shadow:var(--sc); line-height:1; }
+  .rstats { display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; margin:1.25rem 0 2rem; }
+  .rstat { text-align:center; }
+  .rsval { font-family:'VT323',monospace; font-size:34px; color:var(--text); display:block; }
+  .rslbl { font-size:6px; color:var(--dim); letter-spacing:0.1em; }
+  .rbtns { display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; }
+
+  /* ─────── RANKING */
+  .rctrls { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1.4rem; align-items:center; }
+  .csep { width:3px; height:26px; background:var(--bdr); margin:0 0.2rem; }
+  .cb {
+    font-family:'Press Start 2P',monospace; font-size:7px;
+    background:var(--surf2); border:2px solid var(--bdr); color:var(--dim);
+    padding:0.3rem 0.6rem; cursor:pointer; transition:all 0.1s; letter-spacing:0.04em;
+  }
+  .cb:hover { border-color:var(--yellow); color:var(--yellow); }
+  .cb.on { border-color:var(--green); color:var(--green); box-shadow:var(--sg); }
+
+  .rtbl { width:100%; border-collapse:collapse; }
+  .rtbl thead th { font-size:7px; color:var(--green); text-align:left; padding:0.5rem 0.75rem; border-bottom:3px solid var(--green); letter-spacing:0.1em; text-shadow:var(--sg); }
+  .rtbl tbody tr { border-bottom:1px solid rgba(37,37,69,0.8); transition:background 0.1s; }
+  .rtbl tbody tr:hover { background:rgba(57,255,20,0.03); }
+  .rtbl td { padding:0.55rem 0.75rem; }
+  .rpos { font-family:'VT323',monospace; font-size:22px; display:inline-block; min-width:50px; }
+  .rp1 { color:var(--yellow); text-shadow:var(--sy); }
+  .rp2 { color:#c0c0c0; }
+  .rp3 { color:#cd7f32; }
+  .rpn { color:var(--dim); }
+  .ruser { font-size:8.5px; color:var(--text); }
+  .rrat { font-family:'VT323',monospace; font-size:21px; color:var(--cyan); text-align:right; text-shadow:var(--sc); }
+  .ratt { font-family:'VT323',monospace; font-size:19px; color:var(--dim); text-align:right; }
+  .myrow { background:rgba(57,255,20,0.05)!important; outline:2px solid var(--green); }
+
+  /* ─────── QUESTIONS */
+  .qtabs { display:flex; border-bottom:3px solid var(--bdr); margin-bottom:1.5rem; }
+  .qtab {
+    font-family:'Press Start 2P',monospace; font-size:7.5px;
+    background:none; border:none; border-bottom:3px solid transparent;
+    color:var(--dim); padding:0.55rem 0.9rem; cursor:pointer;
+    transition:all 0.1s; margin-bottom:-3px; letter-spacing:0.04em;
+  }
+  .qtab:hover { color:var(--yellow); }
+  .qtab.on { color:var(--green); border-bottom-color:var(--green); text-shadow:var(--sg); }
+
+  .qcard { background:var(--surf2); border:3px solid var(--bdr); padding:1rem; margin-bottom:0.75rem; transition:border-color 0.1s; }
+  .qcard:hover { border-color:#353565; }
+  .qcard-head { display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem; flex-wrap:wrap; }
+  .qstmt { font-family:'VT323',monospace; font-size:20px; color:var(--text); flex:1; }
+  .qmeta { display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; }
+  .sbadge { font-size:7px; padding:0.12rem 0.45rem; border:2px solid; letter-spacing:0.06em; }
+  .sp { border-color:var(--yellow); color:var(--yellow); }
+  .sa { border-color:var(--green); color:var(--green); }
+  .sr { border-color:var(--red); color:var(--red); }
+  .qopts { display:flex; gap:0.9rem; flex-wrap:wrap; margin-bottom:0.55rem; }
+  .qopt { font-family:'VT323',monospace; font-size:17px; color:var(--dim); }
+  .qopt.copt { color:var(--green); text-shadow:var(--sg); }
+  .qacts { display:flex; gap:0.4rem; flex-wrap:wrap; }
+
+  .qform { background:var(--surf2); border:3px solid var(--yellow); box-shadow:var(--sy); padding:1.2rem; margin-bottom:1.25rem; }
+  .frow { margin-bottom:0.85rem; }
+  .flbl { display:block; font-size:6.5px; color:var(--dim); letter-spacing:0.12em; margin-bottom:0.35rem; }
+  .fi {
+    width:100%; background:var(--surf); border:2px solid var(--bdr); color:var(--text);
+    font-family:'VT323',monospace; font-size:20px;
+    padding:0.45rem 0.6rem; outline:none; transition:border-color 0.1s; letter-spacing:0.03em;
+    resize:vertical;
+  }
+  .fi:focus { border-color:var(--yellow); }
+  .fi::placeholder { color:var(--dim); }
+  .fi option { background:var(--surf); }
+  .f2 { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; }
+  .facts { display:flex; gap:0.6rem; margin-top:0.75rem; }
+  .diff-sl { width:100%; accent-color:var(--green); cursor:pointer; }
+
+  /* ─────── AUTH */
+  .auth-wrap { max-width:400px; margin:2rem auto; }
+  .auth-logo { text-align:center; font-size:26px; color:var(--green); text-shadow:var(--sg); margin-bottom:0.4rem; animation:pulse-glow 3s ease-in-out infinite; }
+  .auth-logo em { color:var(--yellow); text-shadow:var(--sy); font-style:normal; }
+  .auth-prompt { text-align:center; font-family:'VT323',monospace; font-size:20px; color:var(--dim); margin-bottom:1.5rem; animation:blink 1.5s step-end infinite; }
+  .auth-box { background:var(--surf2); border:3px solid var(--green); padding:1.5rem; box-shadow:var(--sg); }
+  .atabs { display:flex; margin-bottom:1.25rem; border-bottom:2px solid var(--bdr); }
+  .atab {
+    font-family:'Press Start 2P',monospace; font-size:7.5px;
+    background:none; border:none; border-bottom:2px solid transparent;
+    color:var(--dim); padding:0.45rem 0.7rem; cursor:pointer; transition:all 0.1s; margin-bottom:-2px;
+  }
+  .atab.on { color:var(--green); border-bottom-color:var(--green); }
+  .atab:hover { color:var(--yellow); }
+  .gbtn {
+    width:100%; background:var(--surf); border:2px solid var(--bdr); color:var(--dim);
+    font-family:'Press Start 2P',monospace; font-size:7px;
+    padding:0.55rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    gap:0.45rem; transition:all 0.1s; letter-spacing:0.04em;
+  }
+  .gbtn:hover { border-color:var(--yellow); color:var(--yellow); }
+  .adiv { text-align:center; color:var(--dim); font-size:7px; margin:0.7rem 0; letter-spacing:0.18em; }
+  .aswitch { text-align:center; font-family:'VT323',monospace; font-size:18px; color:var(--dim); margin-top:0.75rem; }
+  .aswitch span { color:var(--yellow); cursor:pointer; text-shadow:var(--sy); }
+  .aswitch span:hover { text-decoration:underline; }
+  .aerr { font-family:'VT323',monospace; font-size:17px; color:var(--red); margin-bottom:0.6rem; animation:blink 1s step-end infinite; }
+
+  /* ─────── CONTRIBUTORS */
+  .cgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:1rem; margin-top:0.75rem; }
+  .ccard {
+    background:var(--surf2); border:3px solid var(--bdr); padding:1.2rem;
+    transition:all 0.1s; position:relative;
+  }
+  .ccard:hover { border-color:var(--cyan); box-shadow:var(--sc); transform:translate(-3px,-3px); }
+  .ccard:hover::after {
+    content:''; position:absolute; bottom:-6px; right:-6px;
+    width:100%; height:100%; border:3px solid var(--cyan); opacity:0.2; pointer-events:none;
+  }
+  .cname { font-size:8.5px; color:var(--text); margin-bottom:0.65rem; }
+  .ccount { font-family:'VT323',monospace; font-size:40px; color:var(--yellow); text-shadow:var(--sy); line-height:1; }
+  .ccountlbl { font-size:6.5px; color:var(--dim); letter-spacing:0.1em; margin-bottom:0.5rem; }
+  .cdate { font-family:'VT323',monospace; font-size:15px; color:var(--dim); margin-bottom:0.4rem; }
+  .ctags { display:flex; gap:0.25rem; flex-wrap:wrap; }
+  .ctag { font-size:6.5px; border:2px solid var(--cyan); color:var(--cyan); padding:0.1rem 0.35rem; }
+
+  /* ─────── TOAST */
+  .toast {
+    position:fixed; bottom:1.5rem; right:1.5rem;
+    background:var(--surf2); border:3px solid var(--green); color:var(--green);
+    font-size:7.5px; padding:0.65rem 1rem; z-index:1000;
+    box-shadow:var(--sg); letter-spacing:0.06em;
+    animation:toastin 0.15s steps(3) forwards;
+  }
+  @keyframes toastin { from { transform:translateX(120%); } to { transform:translateX(0); } }
+
+  /* ─────── RESPONSIVE */
+  @media(max-width:600px) {
+    .mode-grid,.opts,.f2 { grid-template-columns:1fr; }
+    nav { padding:0 0.75rem; }
+    .pg { padding:1.25rem 0.9rem; }
+    .nav-links { display:none; }
+    .hero-t1 { font-size:22px; }
+  }
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
+function calcRating(corrects, wrongQ, secs) {
+  if (!corrects.length) return 0;
+  const base =
+    corrects.reduce((s, q) => s + 100 * q.difficulty, 0) / Math.max(secs, 1);
+  if (!wrongQ) return base;
+  return base * ((wrongQ.difficulty - 1) / 10);
+}
+const dcls = (d) => (d <= 3 ? "de" : d <= 6 ? "dm" : "dh");
+const dlbl = (d) =>
+  d <= 3 ? `LVL${d} EASY` : d <= 6 ? `LVL${d} MED` : `LVL${d} HARD`;
+const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────────────────────────────────────
+function Nav({ page, setPage, user, setUser }) {
+  const pages = [
+    ["home", "HOME"],
+    ["quiz", "PLAY"],
+    ["ranking", "RANKING"],
+    ["questions", "PERGUNTAS"],
+    ["contributors", "MURAL"],
+  ];
+  return (
+    <nav>
+      <div className="logo" onClick={() => setPage("home")}>
+        GG<em>QUIZ</em>
+      </div>
+      <ul className="nav-links">
+        {pages.map(([p, l]) => (
+          <li key={p}>
+            <button
+              className={`nb${page === p ? " on" : ""}`}
+              onClick={() => setPage(p)}
+            >
+              {l}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="nav-r">
+        {user ? (
+          <>
+            <span
+              style={{
+                fontSize: "7px",
+                color: "var(--green)",
+                textShadow: "var(--sg)",
+              }}
+            >
+              {user.username}
+            </span>
+            <button className="btn br sm" onClick={() => setUser(null)}>
+              EXIT
+            </button>
+          </>
+        ) : (
+          <button className="btn bg sm" onClick={() => setPage("auth")}>
+            LOGIN
+          </button>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────────────────────────────────────
+function HomePage({ setPage }) {
+  const [score, setScore] = useState(0);
+  useEffect(() => {
+    let n = 0;
+    const iv = setInterval(() => {
+      n = Math.min(n + 173, 48291);
+      setScore(n);
+      if (n >= 48291) clearInterval(iv);
+    }, 14);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div className="pg">
+      <div className="hero">
+        <div className="hero-bg" />
+        <div className="insert">▶ INSERT COIN TO CONTINUE ◀</div>
+        <div className="hi-score">
+          HI-SCORE &nbsp; {String(score).padStart(6, "0")}
+        </div>
+        <h1 className="hero-t1">GG QUIZ</h1>
+        <h2 className="hero-t2">ESPORTS KNOWLEDGE BATTLE</h2>
+        <p className="hero-desc">
+          TESTE SEU CONHECIMENTO SOBRE O CENARIO COMPETITIVO DE LEAGUE OF
+          LEGENDS. TODAS AS REGIOES. TODAS AS ERAS.
+        </p>
+        <div className="hero-btns">
+          <button className="btn by" onClick={() => setPage("quiz")}>
+            ▶ PLAYER 1 START
+          </button>
+          <button className="btn bc" onClick={() => setPage("ranking")}>
+            RANKING
+          </button>
+        </div>
+        <div className="rpills">
+          {["LCK", "LEC", "LCS", "CBLOL", "LPL", "GLOBAL"].map((r) => (
+            <span key={r} className="rpill" onClick={() => setPage("quiz")}>
+              {r}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="divpix" />
+      <p className="h1">COMO FUNCIONA</p>
+      <p className="sub">// Sistema de pontuacao e modos de jogo</p>
+
+      <div className="feat-grid">
+        {[
+          {
+            icon: "🌎",
+            name: "RANKING GLOBAL",
+            desc: "COMPITA COM JOGADORES DO MUNDO TODO EM UMA TABELA UNIFICADA.",
+          },
+          {
+            icon: "🗺️",
+            name: "MODOS REGIONAIS",
+            desc: "LCK, LPL, LEC, LCS, CBLOL. CADA REGIAO, SEU PROPRIO POOL.",
+          },
+          {
+            icon: "⚡",
+            name: "SISTEMA DE RATING",
+            desc: "PONTUACAO POR DIFICULDADE. PENALIZACAO PROPORCIONAL. PURA MERITOCRACIA.",
+          },
+          {
+            icon: "🕹️",
+            name: "CONTRIBUA",
+            desc: "SUGIRA PERGUNTAS E ENTRE NO MURAL DE COLABORADORES.",
+          },
+        ].map((f) => (
+          <div key={f.name} className="feat">
+            <span className="feat-icon">{f.icon}</span>
+            <div className="feat-name">{f.name}</div>
+            <p className="feat-desc">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QUIZ
+// ─────────────────────────────────────────────────────────────────────────────
+function QuizPage({ user, setPage }) {
+  const [phase, setPhase] = useState("setup");
+  const [mode, setMode] = useState("global");
+  const [rslug, setRslug] = useState(null);
+  const [qs, setQs] = useState([]);
+  const [idx, setIdx] = useState(0);
+  const [corrects, setCorrects] = useState([]);
+  const [wrongQ, setWrongQ] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [timer, setTimer] = useState(20);
+  const [secs, setSecs] = useState(0);
+  const [ts, setTs] = useState(null);
+
+  const q = qs[idx];
+
+  useEffect(() => {
+    if (phase !== "playing" || sel !== null) return;
+    const iv = setInterval(() => {
+      setTimer((t) => {
+        if (t <= 1) {
+          clearInterval(iv);
+          pick(null);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [phase, idx, sel]);
+
+  function start() {
+    let pool = shuffle(ALL_QUESTIONS);
+    if (mode === "regional" && rslug)
+      pool = pool.filter((q) => q.region === rslug);
+    setQs(pool);
+    setCorrects([]);
+    setWrongQ(null);
+    setIdx(0);
+    setSel(null);
+    setTimer(20);
+    setTs(Date.now());
+    setPhase("playing");
+  }
+
+  function pick(option) {
+    if (sel !== null) return;
+    setSel(option);
+    const elapsed = Math.round((Date.now() - (ts || Date.now())) / 1000) || 1;
+    setTimeout(() => {
+      if (option === q.correctOption) {
+        const nc = [...corrects, q];
+        setCorrects(nc);
+        if (idx + 1 >= qs.length) {
+          setSecs(elapsed);
+          setPhase("result");
+        } else {
+          setIdx((i) => i + 1);
+          setSel(null);
+          setTimer(20);
+        }
+      } else {
+        setWrongQ(q);
+        setSecs(elapsed);
+        setPhase("result");
+      }
+    }, 850);
+  }
+
+  const rating = calcRating(corrects, wrongQ, Math.max(secs, 1));
+  const won = corrects.length > 0 && !wrongQ;
+
+  if (phase === "suggest")
+    return <SuggestPage onBack={() => setPhase("setup")} />;
+
+  if (phase === "setup")
+    return (
+      <div className="pg">
+        <p className="h1">PLAYER SELECT</p>
+        <p className="sub">// Escolha modo e inicie a partida</p>
+        <div className="divpix" />
+        <div className="mode-grid">
+          <div
+            className={`mc${mode === "global" ? " sel" : ""}`}
+            onClick={() => {
+              setMode("global");
+              setRslug(null);
+            }}
+          >
+            <span className="mc-icon">🌎</span>
+            <div className="mc-name">GLOBAL</div>
+            <p className="mc-desc">PERGUNTAS DE TODAS AS REGIOES</p>
+          </div>
+          <div
+            className={`mc${mode === "regional" ? " sel" : ""}`}
+            onClick={() => setMode("regional")}
+          >
+            <span className="mc-icon">🗺️</span>
+            <div className="mc-name">REGIONAL</div>
+            <p className="mc-desc">SELECIONE UMA REGIAO ESPECIFICA</p>
+          </div>
+        </div>
+        {mode === "regional" && (
+          <div className="rsel">
+            {REGIONS.map((r) => (
+              <button
+                key={r.id}
+                className={`rsb${rslug === r.slug ? " sel" : ""}`}
+                onClick={() => setRslug(r.slug)}
+              >
+                {r.slug}
+              </button>
+            ))}
+          </div>
+        )}
+        {mode === "regional" && !rslug && (
+          <p
+            style={{
+              fontFamily: "VT323,monospace",
+              fontSize: "18px",
+              color: "var(--red)",
+              marginBottom: "1rem",
+              animation: "blink 1s step-end infinite",
+            }}
+          >
+            ⚠ SELECIONE UMA REGIAO
+          </p>
+        )}
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button
+            className="btn by"
+            disabled={mode === "regional" && !rslug}
+            onClick={start}
+          >
+            ▶ INICIAR
+          </button>
+          {user && (
+            <button className="btn bc" onClick={() => setPhase("suggest")}>
+              + SUGERIR
+            </button>
+          )}
+        </div>
+      </div>
+    );
+
+  if (phase === "playing" && q)
+    return (
+      <div className="pg">
+        <div className="hud">
+          <div className="hud-item">
+            <span className="hlbl">STAGE</span>
+            <span className="hval">
+              {idx + 1}/{qs.length}
+            </span>
+          </div>
+          <div className="hud-item">
+            <span className="hlbl">DIFICULDADE</span>
+            <span className={`dbadge ${dcls(q.difficulty)}`}>
+              {dlbl(q.difficulty)}
+            </span>
+          </div>
+          <div className="hud-item">
+            <span className="hlbl">ACERTOS</span>
+            <span className="hval" style={{ color: "var(--cyan)" }}>
+              {corrects.length}
+            </span>
+          </div>
+          <div className="hud-item">
+            <span className="hlbl">TIMER</span>
+            <span
+              className={`hval${timer <= 5 ? " danger" : timer <= 10 ? " warn" : ""}`}
+            >
+              {String(timer).padStart(2, "0")}s
+            </span>
+          </div>
+        </div>
+        <div className="pbar">
+          <div
+            className="pfill"
+            style={{ width: `${(idx / qs.length) * 100}%` }}
+          />
+        </div>
+        <div className="qbox">
+          <p className="qtext">{q.statement}</p>
+        </div>
+        <div className="opts">
+          {[
+            ["A", q.optionA],
+            ["B", q.optionB],
+            ["C", q.optionC],
+            ["D", q.optionD],
+          ].map(([l, t]) => {
+            let cls = "";
+            if (sel !== null) {
+              if (l === q.correctOption) cls = "ok";
+              else if (l === sel) cls = "no";
+            }
+            return (
+              <button
+                key={l}
+                className={`opt ${cls}`}
+                disabled={sel !== null}
+                onClick={() => pick(l)}
+              >
+                <span className="olet">{l}</span>
+                {t}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+
+  if (phase === "result")
+    return (
+      <div className="pg">
+        <div className="result">
+          <p className="rlbl">{won ? "STAGE CLEAR" : "GAME OVER"}</p>
+          <div className={`rheadline ${won ? "rwin" : "rlose"}`}>
+            {won ? "GG EZ! 🏆" : "YOU DIED 💀"}
+          </div>
+          <div className="rrating">
+            <div className="rnum">{rating.toFixed(2)}</div>
+          </div>
+          <div className="rstats">
+            <div className="rstat">
+              <span className="rsval" style={{ color: "var(--green)" }}>
+                {corrects.length}
+              </span>
+              <span className="rslbl">ACERTOS</span>
+            </div>
+            <div className="rstat">
+              <span className="rsval">{secs}s</span>
+              <span className="rslbl">TEMPO</span>
+            </div>
+            <div className="rstat">
+              <span
+                className="rsval"
+                style={{ color: wrongQ ? "var(--red)" : "var(--dim)" }}
+              >
+                {wrongQ?.difficulty ?? "—"}
+              </span>
+              <span className="rslbl">DIFIC. ERRO</span>
+            </div>
+          </div>
+          <div className="rbtns">
+            <button className="btn by" onClick={start}>
+              ▶ PLAY AGAIN
+            </button>
+            <button className="btn bg" onClick={() => setPhase("setup")}>
+              ⚙ MODO
+            </button>
+            <button className="btn bc" onClick={() => setPage("ranking")}>
+              🏆 RANKING
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+  return null;
+}
+
+function SuggestPage({ onBack }) {
+  const [f, setF] = useState({
+    statement: "",
+    optionA: "",
+    optionB: "",
+    optionC: "",
+    optionD: "",
+    correct: "A",
+    difficulty: 5,
+    region: "LCK",
+  });
+  const [sent, setSent] = useState(false);
+  const s = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  if (sent)
+    return (
+      <div className="pg">
+        <div
+          style={{
+            border: "3px solid var(--green)",
+            padding: "2rem",
+            textAlign: "center",
+            boxShadow: "var(--sg)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "13px",
+              color: "var(--green)",
+              marginBottom: "0.75rem",
+              textShadow: "var(--sg)",
+            }}
+          >
+            ✓ ENVIADO!
+          </div>
+          <p
+            style={{
+              fontFamily: "VT323,monospace",
+              fontSize: "20px",
+              color: "var(--dim)",
+              marginBottom: "1.5rem",
+            }}
+          >
+            SUA SUGESTAO FOI ENVIADA PARA REVISAO.
+          </p>
+          <button className="btn bg" onClick={onBack}>
+            ← VOLTAR
+          </button>
+        </div>
+      </div>
+    );
+
+  return (
+    <div className="pg">
+      <p className="h1">SUGERIR PERGUNTA</p>
+      <p className="sub">// Sera revisada pelo admin antes de entrar no pool</p>
+      <div className="divpix" />
+      <QuestionForm
+        f={f}
+        setF={setF}
+        onSubmit={() => setSent(true)}
+        onCancel={onBack}
+        submitLabel="ENVIAR SUGESTAO"
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RANKING
+// ─────────────────────────────────────────────────────────────────────────────
+function RankingPage({ user }) {
+  const [rslug, setRslug] = useState(null);
+  const [period, setPeriod] = useState("ALLTIME");
+  const periods = [
+    ["DAILY", "DIARIO"],
+    ["WEEKLY", "SEMANAL"],
+    ["MONTHLY", "MENSAL"],
+    ["ALLTIME", "ALL TIME"],
+  ];
+
+  return (
+    <div className="pg">
+      <p className="h1">HALL OF FAME</p>
+      <p className="sub">// TOP JOGADORES — {rslug ?? "GLOBAL"}</p>
+      <div className="divpix" />
+
+      <div className="rctrls">
+        <button
+          className={`cb${!rslug ? " on" : ""}`}
+          onClick={() => setRslug(null)}
+        >
+          GLOBAL
+        </button>
+        {REGIONS.map((r) => (
+          <button
+            key={r.id}
+            className={`cb${rslug === r.slug ? " on" : ""}`}
+            onClick={() => setRslug(r.slug)}
+          >
+            {r.slug}
+          </button>
+        ))}
+        <div className="csep" />
+        {periods.map(([key, lbl]) => (
+          <button
+            key={key}
+            className={`cb${period === key ? " on" : ""}`}
+            onClick={() => setPeriod(key)}
+          >
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      <div
+        style={{ background: "var(--surf)", border: "3px solid var(--bdr)" }}
+      >
+        <table className="rtbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>JOGADOR</th>
+              <th style={{ textAlign: "right" }}>RATING</th>
+              <th style={{ textAlign: "right" }}>TENTATIVAS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MOCK_RANKING.map((r) => {
+              const isMe = user && r.username === user.username?.toUpperCase();
+              return (
+                <tr key={r.position} className={isMe ? "myrow" : ""}>
+                  <td>
+                    <span
+                      className={`rpos ${r.position === 1 ? "rp1" : r.position === 2 ? "rp2" : r.position === 3 ? "rp3" : "rpn"}`}
+                    >
+                      {r.position === 1
+                        ? "★1"
+                        : r.position === 2
+                          ? "★2"
+                          : r.position === 3
+                            ? "★3"
+                            : `#${r.position}`}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="ruser">
+                      {r.username}
+                      {isMe ? " ◄ YOU" : ""}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="rrat">{r.rating.toFixed(2)}</span>
+                  </td>
+                  <td>
+                    <span className="ratt">{r.attempts}x</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QUESTIONS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function QuestionForm({ f, setF, onSubmit, onCancel, submitLabel = "SALVAR" }) {
+  const s = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  return (
+    <div className="qform">
+      <div className="f2">
+        <div className="frow">
+          <label className="flbl">REGIAO</label>
+          <select
+            className="fi"
+            value={f.region}
+            onChange={(e) => s("region", e.target.value)}
+          >
+            {REGIONS.map((r) => (
+              <option key={r.id} value={r.slug}>
+                {r.slug}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="frow">
+          <label className="flbl">DIFICULDADE: {f.difficulty}</label>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={f.difficulty}
+            className="diff-sl"
+            onChange={(e) => s("difficulty", +e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="frow">
+        <label className="flbl">ENUNCIADO</label>
+        <textarea
+          className="fi"
+          rows={3}
+          value={f.statement}
+          onChange={(e) => s("statement", e.target.value)}
+          placeholder="TEXTO DA PERGUNTA..."
+        />
+      </div>
+      <div className="f2">
+        {["A", "B", "C", "D"].map((l) => (
+          <div className="frow" key={l}>
+            <label className="flbl">OPCAO {l}</label>
+            <input
+              className="fi"
+              value={f[`option${l}`] || ""}
+              onChange={(e) => s(`option${l}`, e.target.value)}
+              placeholder={`ALTERNATIVA ${l}`}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="frow">
+        <label className="flbl">RESPOSTA CORRETA</label>
+        <select
+          className="fi"
+          style={{ width: "80px" }}
+          value={f.correct}
+          onChange={(e) => s("correct", e.target.value)}
+        >
+          {["A", "B", "C", "D"].map((l) => (
+            <option key={l}>{l}</option>
+          ))}
+        </select>
+      </div>
+      <div className="facts">
+        <button className="btn by" onClick={onSubmit}>
+          {submitLabel}
+        </button>
+        {onCancel && (
+          <button className="btn br" onClick={onCancel}>
+            CANCELAR
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuestionsPage({ user }) {
+  const [tab, setTab] = useState("browse");
+  const [pending, setPending] = useState(INIT_PENDING);
+  const [approved, setApproved] = useState(
+    ALL_QUESTIONS.slice(0, 5).map((q) => ({ ...q, status: "APPROVED" })),
+  );
+  const [showForm, setShowForm] = useState(false);
+  const [newQ, setNewQ] = useState({
+    statement: "",
+    optionA: "",
+    optionB: "",
+    optionC: "",
+    optionD: "",
+    correct: "A",
+    difficulty: 5,
+    region: "LCK",
+  });
+  const [toast, setToast] = useState(null);
+  const isAdmin = user?.role === "ADMIN";
+
+  const toast_ = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const tabs = [
+    ["browse", "TODAS"],
+    ...(isAdmin ? [["pending", `PENDENTES (${pending.length})`]] : []),
+    ["suggest", "SUGERIR"],
+  ];
+
+  return (
+    <div className="pg">
+      <p className="h1">PERGUNTAS</p>
+      <p className="sub">// Gerencie e contribua com o pool oficial</p>
+      <div className="divpix" />
+
+      <div className="qtabs">
+        {tabs.map(([k, l]) => (
+          <button
+            key={k}
+            className={`qtab${tab === k ? " on" : ""}`}
+            onClick={() => setTab(k)}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {/* BROWSE */}
+      {tab === "browse" && (
+        <>
+          {isAdmin && (
+            <div style={{ marginBottom: "1rem" }}>
+              <button
+                className="btn by sm"
+                onClick={() => setShowForm((s) => !s)}
+              >
+                {showForm ? "- FECHAR" : "+ NOVA PERGUNTA"}
+              </button>
+            </div>
+          )}
+          {showForm && isAdmin && (
+            <QuestionForm
+              f={newQ}
+              setF={setNewQ}
+              onSubmit={() => {
+                setApproved((a) => [
+                  ...a,
+                  {
+                    ...newQ,
+                    id: Date.now(),
+                    correctOption: newQ.correct,
+                    status: "APPROVED",
+                  },
+                ]);
+                setShowForm(false);
+                toast_("✓ PERGUNTA ADICIONADA");
+              }}
+              onCancel={() => setShowForm(false)}
+            />
+          )}
+          {approved.map((q) => (
+            <div key={q.id} className="qcard">
+              <div className="qcard-head">
+                <p className="qstmt">{q.statement}</p>
+                <div className="qmeta">
+                  <span className={`dbadge ${dcls(q.difficulty)}`}>
+                    {dlbl(q.difficulty)}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "VT323,monospace",
+                      fontSize: "16px",
+                      color: "var(--dim)",
+                    }}
+                  >
+                    {q.region}
+                  </span>
+                </div>
+              </div>
+              <div className="qopts">
+                {["A", "B", "C", "D"].map((l) => (
+                  <span
+                    key={l}
+                    className={`qopt${q.correctOption === l ? " copt" : ""}`}
+                  >
+                    [{l}] {q[`option${l}`]}
+                  </span>
+                ))}
+              </div>
+              {isAdmin && (
+                <div className="qacts">
+                  <button
+                    className="btn br sm"
+                    onClick={() => {
+                      setApproved((a) => a.filter((x) => x.id !== q.id));
+                      toast_("⊘ REMOVIDA");
+                    }}
+                  >
+                    REMOVER
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* PENDING */}
+      {tab === "pending" && isAdmin && (
+        <>
+          {pending.length === 0 && (
+            <p
+              style={{
+                fontFamily: "VT323,monospace",
+                fontSize: "20px",
+                color: "var(--dim)",
+              }}
+            >
+              NENHUMA PERGUNTA PENDENTE.
+            </p>
+          )}
+          {pending.map((q) => (
+            <div
+              key={q.id}
+              className="qcard"
+              style={{ borderColor: "var(--yellow)" }}
+            >
+              <div className="qcard-head">
+                <p className="qstmt">{q.statement}</p>
+                <div className="qmeta">
+                  <span className="sbadge sp">PENDENTE</span>
+                  <span className={`dbadge ${dcls(q.difficulty)}`}>
+                    {dlbl(q.difficulty)}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "VT323,monospace",
+                      fontSize: "16px",
+                      color: "var(--dim)",
+                    }}
+                  >
+                    {q.region}
+                  </span>
+                </div>
+              </div>
+              <div className="qopts">
+                {["A", "B", "C", "D"].map((l) => (
+                  <span
+                    key={l}
+                    className={`qopt${q.correctOption === l ? " copt" : ""}`}
+                  >
+                    [{l}] {q[`option${l}`]}
+                  </span>
+                ))}
+              </div>
+              <p
+                style={{
+                  fontFamily: "VT323,monospace",
+                  fontSize: "15px",
+                  color: "var(--dim)",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                AUTOR: {q.author}
+              </p>
+              <div className="qacts">
+                <button
+                  className="btn bg sm"
+                  onClick={() => {
+                    setPending((p) => p.filter((x) => x.id !== q.id));
+                    setApproved((a) => [...a, { ...q, status: "APPROVED" }]);
+                    toast_("✓ APROVADA");
+                  }}
+                >
+                  ✓ APROVAR
+                </button>
+                <button
+                  className="btn br sm"
+                  onClick={() => {
+                    setPending((p) => p.filter((x) => x.id !== q.id));
+                    toast_("✗ REJEITADA");
+                  }}
+                >
+                  ✗ REJEITAR
+                </button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* SUGGEST */}
+      {tab === "suggest" &&
+        (user ? (
+          <SuggestFormInline
+            onDone={() => toast_("✓ SUGESTAO ENVIADA — aguardando revisao")}
+          />
+        ) : (
+          <p
+            style={{
+              fontFamily: "VT323,monospace",
+              fontSize: "20px",
+              color: "var(--dim)",
+            }}
+          >
+            VOCE PRECISA ESTAR LOGADO PARA SUGERIR.
+          </p>
+        ))}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+function SuggestFormInline({ onDone }) {
+  const [f, setF] = useState({
+    statement: "",
+    optionA: "",
+    optionB: "",
+    optionC: "",
+    optionD: "",
+    correct: "A",
+    difficulty: 5,
+    region: "LCK",
+  });
+  const [sent, setSent] = useState(false);
+  if (sent)
+    return (
+      <p
+        style={{
+          fontFamily: "VT323,monospace",
+          fontSize: "20px",
+          color: "var(--green)",
+        }}
+      >
+        ✓ SUGESTAO ENVIADA!
+      </p>
+    );
+  return (
+    <QuestionForm
+      f={f}
+      setF={setF}
+      onSubmit={() => {
+        setSent(true);
+        onDone();
+      }}
+      submitLabel="ENVIAR SUGESTAO"
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTRIBUTORS
+// ─────────────────────────────────────────────────────────────────────────────
+function ContributorsPage() {
+  return (
+    <div className="pg">
+      <p className="h1">MURAL DE COLABORADORES</p>
+      <p className="sub">// HEROES QUE CONSTRUIRAM O POOL OFICIAL</p>
+      <div className="divpix" />
+      <div className="cgrid">
+        {MOCK_CONTRIBUTORS.map((c) => (
+          <div key={c.username} className="ccard">
+            <div className="cname">{c.username}</div>
+            <div className="ccount">{c.approved}</div>
+            <div className="ccountlbl">PERGUNTAS APROVADAS</div>
+            <div className="cdate">
+              DESDE {new Date(c.firstDate).toLocaleDateString("pt-BR")}
+            </div>
+            <div className="ctags">
+              {c.regions.map((r) => (
+                <span key={r} className="ctag">
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────────────────────────────────────
+function AuthPage({ setUser, setPage }) {
+  const [tab, setTab] = useState("login");
+  const [f, setF] = useState({ username: "", email: "", password: "" });
+  const [err, setErr] = useState("");
+  const s = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  function submit() {
+    if (!f.email || !f.password) {
+      setErr("▶ PREENCHA TODOS OS CAMPOS");
+      return;
+    }
+    const isAdmin = f.email.includes("admin");
+    setUser({
+      username: (f.username || f.email.split("@")[0]).toUpperCase(),
+      role: isAdmin ? "ADMIN" : "USER",
+    });
+    setPage("home");
+  }
+
+  return (
+    <div className="pg">
+      <div className="auth-wrap">
+        <div className="auth-logo">
+          GG<em>QUIZ</em>
+        </div>
+        <div className="auth-prompt">— INSERT COIN —</div>
+        <div className="auth-box">
+          <div className="atabs">
+            <button
+              className={`atab${tab === "login" ? " on" : ""}`}
+              onClick={() => setTab("login")}
+            >
+              LOGIN
+            </button>
+            <button
+              className={`atab${tab === "register" ? " on" : ""}`}
+              onClick={() => setTab("register")}
+            >
+              CRIAR CONTA
+            </button>
+          </div>
+          {tab === "register" && (
+            <div className="frow">
+              <label className="flbl">USERNAME</label>
+              <input
+                className="fi"
+                placeholder="SEU_NICK"
+                value={f.username}
+                onChange={(e) => s("username", e.target.value)}
+              />
+            </div>
+          )}
+          <div className="frow">
+            <label className="flbl">EMAIL</label>
+            <input
+              className="fi"
+              type="email"
+              placeholder="EMAIL@EXEMPLO.COM"
+              value={f.email}
+              onChange={(e) => s("email", e.target.value)}
+            />
+          </div>
+          <div className="frow">
+            <label className="flbl">SENHA</label>
+            <input
+              className="fi"
+              type="password"
+              placeholder="••••••••"
+              value={f.password}
+              onChange={(e) => s("password", e.target.value)}
+            />
+          </div>
+          {err && <p className="aerr">{err}</p>}
+          <button
+            className="btn bg"
+            style={{ width: "100%", marginBottom: "0.5rem" }}
+            onClick={submit}
+          >
+            {tab === "login" ? "▶ ENTRAR" : "▶ CRIAR CONTA"}
+          </button>
+          <div className="adiv">— OU —</div>
+          <button className="gbtn">
+            <svg width="14" height="14" viewBox="0 0 18 18">
+              <path
+                fill="#4285F4"
+                d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+              />
+              <path
+                fill="#34A853"
+                d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+              />
+              <path
+                fill="#EA4335"
+                d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
+              />
+            </svg>
+            CONTINUAR COM GOOGLE
+          </button>
+          <div className="aswitch">
+            {tab === "login" ? (
+              <>
+                SEM CONTA?{" "}
+                <span onClick={() => setTab("register")}>CRIAR AGORA</span>
+              </>
+            ) : (
+              <>
+                JA TEM CONTA?{" "}
+                <span onClick={() => setTab("login")}>ENTRAR</span>
+              </>
+            )}
+          </div>
+          <p
+            style={{
+              fontFamily: "VT323,monospace",
+              fontSize: "14px",
+              color: "var(--dim)",
+              textAlign: "center",
+              marginTop: "0.5rem",
+            }}
+          >
+            DICA: USE "admin@" PARA CONTA ADMIN
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROOT
+// ─────────────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [page, setPage] = useState("home");
+  const [user, setUser] = useState(null);
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="app">
+        <Nav page={page} setPage={setPage} user={user} setUser={setUser} />
+        {page === "home" && <HomePage setPage={setPage} />}
+        {page === "quiz" && <QuizPage user={user} setPage={setPage} />}
+        {page === "ranking" && <RankingPage user={user} />}
+        {page === "questions" && <QuestionsPage user={user} />}
+        {page === "contributors" && <ContributorsPage />}
+        {page === "auth" && <AuthPage setUser={setUser} setPage={setPage} />}
+      </div>
+    </>
+  );
+}
