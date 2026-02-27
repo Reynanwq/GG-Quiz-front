@@ -5,6 +5,6 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   preview: {
-    allowedHosts: "all", // 👈 PERMITE QUALQUER HOST
+    allowedHosts: ["gg-quiz-front.onrender.com"], // 👈 USANDO ARRAY
   },
 });
