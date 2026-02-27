@@ -2,7 +2,11 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api", // Porta padrão do seu Spring Boot
+  baseURL:
+    "https://unparticularizing-nongenetically-maureen.ngrok-free.dev/api",
+  headers: {
+    "ngrok-skip-browser-warning": "true", // 👈 LINHA MÁGICA QUE RESOLVE
+  },
 });
 
 api.interceptors.request.use((config) => {

@@ -4,12 +4,14 @@ import { useState, useEffect, useRef } from "react";
 // CONFIGURAÇÕES BASE E UTILS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE =
+  "https://unparticularizing-nongenetically-maureen.ngrok-free.dev/api";
 
 const fetchWithAuth = async (url, options = {}) => {
   const token = localStorage.getItem("token");
   const headers = {
     "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "true",
     ...options.headers,
   };
   if (token) {
@@ -187,7 +189,7 @@ function HomePage({ setPage }) {
         <h2 className="hero-t2">ESPORTS KNOWLEDGE BATTLE</h2>
         <div className="hero-btns mt-8">
           <button className="btn by" onClick={() => setPage("quiz")}>
-            ▶ PLAYER 1 START
+            ▶ START
           </button>
           <button className="btn bc" onClick={() => setPage("ranking")}>
             RANKING
@@ -699,7 +701,7 @@ function RankingPage({ user }) {
             className="font-['VT323'] text-xl"
             style={{ color: "var(--cyan)", textShadow: "var(--sc)" }}
           >
-            ⚡ SUA POSIÇÃO
+            SUA POSIÇÃO
           </span>
           {myPosition ? (
             <div
@@ -1774,7 +1776,7 @@ function AdminAccessCounter() {
         className="font-['VT323'] text-xl"
         style={{ color: "var(--cyan)", textShadow: "var(--sc)" }}
       >
-        📊 ACESSOS TOTAIS
+        ACESSOS TOTAIS
       </span>
       <span
         className="font-['VT323'] text-3xl"
