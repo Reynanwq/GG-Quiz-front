@@ -2,10 +2,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL:
-    "https://unparticularizing-nongenetically-maureen.ngrok-free.dev/api",
+  baseURL: "https://gg-quiz-production.up.railway.app/api",
   headers: {
-    "ngrok-skip-browser-warning": "true", // 👈 LINHA MÁGICA QUE RESOLVE
+    "ngrok-skip-browser-warning": "true",
   },
 });
 

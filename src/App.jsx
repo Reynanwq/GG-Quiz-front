@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from "react";
 // CONFIGURAÇÕES BASE E UTILS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const API_BASE =
-  "https://unparticularizing-nongenetically-maureen.ngrok-free.dev/api";
+const API_BASE = "https://gg-quiz-production.up.railway.app/api";
 
 const fetchWithAuth = async (url, options = {}) => {
   const token = localStorage.getItem("token");
